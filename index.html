@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Entrenador de Bajo Eléctrico - PWA & Modo Ensayo</title>
+    
+    <!-- PWA Manifest & Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1e27">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BajoTrainer">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+
+    <style>
+        :root {
+            --bg-dark: #0f1218;
+            --card-bg: #181d26;
+            --card-border: #283141;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --fretboard-wood: #211915;
+            --fret-wire: #9ca3af;
+            --string-color: #cbd5e1;
+            --brass-nut: #d4af37;
+            --text-main: #f3f4f6;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.5);
+            --error: #ef4444;
+            --error-glow: rgba(239, 68, 68, 0.5);
+            --warning: #f59e0b;
+            --root-note: #ef4444;
+            --fifth-note: #3b82f6;
+            --octave-note: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0b0d12 0%, #151922 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 14px;
+            overflow-x: hidden;
+        }
+
+        /* Top Header */
+        header {
+            width: 100%;
+            max-width: 1280px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0 12px 0;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .title-group h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .title-group p {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            margin-top: 2px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 12px;
+            background: var(--card-bg);
+            padding: 6px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #60a5fa;
+            line-height: 1.1;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Navigation Mode Tabs */
+        .mode-tabs {
+            width: 100%;
+            max-width: 1280px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .mode-tab-btn {
+            background: #1c222e;
+            color: #cbd5e1;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .mode-tab-btn:hover {
+            background: #252e3e;
+            border-color: #3b82f6;
+        }
+
+        .mode-tab-btn.active {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            border-color: #93c5fd;
+            color: white;
+            box-shadow: 0 0 14px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Sub-controls Bar */
+        .subcontrols-bar {
+            width: 100%;
+            max-width: 1280px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #222938;
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            background: #2a3346;
+            border-color: #3b82f6;
+        }
+
+        .btn.active {
+            background: #2563eb;
+            border-color: #60a5fa;
+            color: white;
+        }
+
+        .btn.accent-btn {
+            background: #d97706;
+            border-color: #f59e0b;
+            color: white;
+        }
+
+        .btn.accent-btn:hover {
+            background: #b45309;
+        }
+
+        /* Dynamic Main Interactive Box */
+        .interactive-box {
+            width: 100%;
+            max-width: 1280px;
+            background: linear-gradient(180deg, #1a202c 0%, #141822 100%);
+            border: 2px solid #2d3748;
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        /* LIVE REHEARSAL / QUICK NOTE FINDER PANEL */
+        .rehearsal-notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .rehearsal-note-btn {
+            background: #242c3d;
+            border: 1.5px solid #3b465c;
+            color: #f8fafc;
+            border-radius: 10px;
+            padding: 10px 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rehearsal-note-btn .note-main {
+            font-size: 1.35rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .rehearsal-note-btn .note-sub {
+            font-size: 0.68rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .rehearsal-note-btn:hover {
+            background: #333e54;
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+        }
+
+        .rehearsal-note-btn.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-color: #93c5fd;
+            box-shadow: 0 0 12px var(--accent-glow);
+            transform: scale(1.04);
+        }
+
+        .legend-bar {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-root { background: var(--root-note); box-shadow: 0 0 6px var(--root-note); }
+        .dot-fifth { background: var(--fifth-note); box-shadow: 0 0 6px var(--fifth-note); }
+        .dot-octave { background: var(--octave-note); box-shadow: 0 0 6px var(--octave-note); }
+
+        /* TARGET DISPLAY FOR CHALLENGE MODES */
+        .challenge-header {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .target-note-display {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 10px;
+            margin: 6px 0;
+        }
+
+        .target-note-main {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 16px rgba(96, 165, 250, 0.6);
+            line-height: 1;
+        }
+
+        .target-note-solfege {
+            font-size: 1.25rem;
+            color: #93c5fd;
+            font-weight: 700;
+        }
+
+        .target-string-badge {
+            display: inline-block;
+            background: #1e3a8a;
+            color: #bfdbfe;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid #3b82f6;
+            margin-top: 4px;
+        }
+
+        .feedback-message {
+            min-height: 22px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .feedback-success { color: var(--success); text-shadow: 0 0 8px var(--success-glow); }
+        .feedback-error { color: var(--error); text-shadow: 0 0 8px var(--error-glow); }
+
+        /* SPEED TRAINER TIMER BAR */
+        .speed-timer-container {
+            width: 100%;
+            max-width: 400px;
+            height: 8px;
+            background: #242c3d;
+            border-radius: 4px;
+            margin: 10px auto 4px auto;
+            overflow: hidden;
+            display: none;
+        }
+
+        .speed-timer-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+            transform-origin: left;
+            transition: width 0.05s linear;
+        }
+
+        /* REVERSE QUIZ BUTTONS */
+        .reverse-quiz-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+            max-width: 580px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .reverse-btn {
+            min-width: 52px;
+            height: 44px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            background: #1f2937;
+            color: #f3f4f6;
+            border: 1px solid #374151;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .reverse-btn span.sub {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+
+        .reverse-btn:hover {
+            background: #374151;
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+        }
+
+        /* FRETBOARD HORIZONTAL CONTAINER */
+        .fretboard-wrapper {
+            width: 100%;
+            max-width: 1280px;
+            background: #0a0c10;
+            padding: 16px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--card-border);
+            overflow-x: auto;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.7);
+            margin-bottom: 14px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .fretboard-stage-view {
+            border-color: #4f46e5;
+            box-shadow: inset 0 0 15px rgba(79, 70, 229, 0.25);
+        }
+
+        .fretboard {
+            position: relative;
+            background: linear-gradient(180deg, #1b1411 0%, #291e1a 50%, #1b1411 100%);
+            border-top: 3px solid #382c24;
+            border-bottom: 3px solid #382c24;
+            display: flex;
+            min-width: 980px;
+            height: 200px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            border-radius: 4px;
+        }
+
+        /* Nut (Traste 0) */
+        .fret-column.fret-0 {
+            width: 58px;
+            min-width: 58px;
+            background: #0f0c0b;
+            border-right: 7px solid var(--brass-nut);
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.7);
+        }
+
+        .fret-column {
+            flex: 1;
+            position: relative;
+            border-right: 3px solid #a1a1aa;
+            box-shadow: inset -1px 0 2px rgba(255, 255, 255, 0.35), inset 1px 0 2px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 6px 0;
+            z-index: 2;
+        }
+
+        .fret-column:last-child {
+            border-right: 6px solid #4b5563;
+        }
+
+        /* Inlay Dots */
+        .fret-marker-dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 13px;
+            height: 13px;
+            background: radial-gradient(circle, #f1f5f9 30%, #94a3b8 90%);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.4), 0 0 4px rgba(255,255,255,0.2);
+            opacity: 0.85;
+            z-index: 1;
+        }
+
+        .fret-marker-double-1 { top: 25%; }
+        .fret-marker-double-2 { top: 75%; }
+
+        .fret-number {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        .fret-0 .fret-number { color: var(--brass-nut); }
+
+        /* String Rows */
+        .string-row {
+            position: relative;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 4;
+        }
+
+        .string-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .string-line.string-0 { /* G string */
+            height: 2.2px;
+            background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 100%);
+        }
+        .string-line.string-1 { /* D string */
+            height: 3.2px;
+            background: repeating-linear-gradient(90deg, #f1f5f9 0px, #94a3b8 2px, #475569 3px);
+        }
+        .string-line.string-2 { /* A string */
+            height: 4.6px;
+            background: repeating-linear-gradient(90deg, #e2e8f0 0px, #94a3b8 2px, #334155 3.5px);
+        }
+        .string-line.string-3 { /* E string - Thickest */
+            height: 6.4px;
+            background: repeating-linear-gradient(90deg, #cbd5e1 0px, #64748b 2px, #1e293b 4px);
+        }
+
+        /* Note Badge on Fret */
+        .fret-note-target {
+            width: 31px;
+            height: 31px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: transparent;
+            z-index: 10;
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .fret-note-target:hover {
+            transform: scale(1.18);
+            border-color: #60a5fa;
+            background: rgba(59, 130, 246, 0.35);
+            color: #ffffff !important;
+        }
+
+        .fret-note-target.show-all-labels {
+            background: rgba(24, 32, 47, 0.88);
+            color: #e2e8f0;
+            border-color: #475569;
+        }
+
+        .fret-note-target.natural-note {
+            background: rgba(248, 250, 252, 0.95);
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
+        .fret-note-target.accidental-note {
+            background: rgba(15, 23, 42, 0.92);
+            color: #93c5fd;
+            border-color: #3b82f6;
+        }
+
+        /* REHEARSAL HIGHLIGHT STYLES */
+        .fret-note-target.rehearsal-root-primary {
+            background: var(--root-note) !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 16px rgba(239, 68, 68, 0.95);
+            transform: scale(1.22);
+            animation: pulseRoot 1.2s infinite alternate;
+        }
+
+        .fret-note-target.rehearsal-root-octave {
+            background: var(--octave-note) !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.9);
+            transform: scale(1.15);
+        }
+
+        .fret-note-target.rehearsal-fifth {
+            background: var(--fifth-note) !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.9);
+            transform: scale(1.1);
+        }
+
+        /* CHALLENGE HIGHLIGHTS */
+        .fret-note-target.highlight-target {
+            background: #f59e0b !important;
+            color: #000000 !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.9);
+            animation: pulseTarget 1s infinite alternate;
+        }
+
+        .fret-note-target.correct-hit {
+            background: #10b981 !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.95);
+            transform: scale(1.25);
+        }
+
+        .fret-note-target.wrong-hit {
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.95);
+            animation: shake 0.3s;
+        }
+
+        @keyframes pulseRoot {
+            0% { transform: scale(1.15); box-shadow: 0 0 10px rgba(239, 68, 68, 0.7); }
+            100% { transform: scale(1.26); box-shadow: 0 0 22px rgba(239, 68, 68, 1); }
+        }
+
+        @keyframes pulseTarget {
+            0% { transform: scale(1); box-shadow: 0 0 8px rgba(245, 158, 11, 0.6); }
+            100% { transform: scale(1.2); box-shadow: 0 0 20px rgba(245, 158, 11, 1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* String Column Indicator (Left of Fret 0) */
+        .string-labels-col {
+            position: absolute;
+            left: -48px;
+            top: 0;
+            bottom: 0;
+            width: 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 6px 0;
+            pointer-events: none;
+        }
+
+        .string-indicator {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            background: #1e2433;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+
+        /* Band Rehearsal Quick Cheatsheet */
+        .theory-section {
+            width: 100%;
+            max-width: 1280px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .theory-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+        }
+
+        .theory-card h4 {
+            color: #60a5fa;
+            font-size: 0.92rem;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .theory-card p, .theory-card ul {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            line-height: 1.45;
+        }
+
+        .theory-card ul {
+            padding-left: 18px;
+            margin-top: 4px;
+        }
+
+        .badge-pill {
+            background: #2e384d;
+            color: #93c5fd;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* Stage Mode (High Contrast for dark rehearsal rooms) */
+        body.stage-mode {
+            background: #000000;
+        }
+        body.stage-mode .interactive-box, 
+        body.stage-mode .theory-card, 
+        body.stage-mode .subcontrols-bar,
+        body.stage-mode .header-stats {
+            background: #0a0a0a;
+            border-color: #3f3f46;
+        }
+        body.stage-mode .fretboard {
+            background: #111111;
+        }
+
+        /* Mobile Landscape Optimizations */
+        @media (max-height: 520px) and (orientation: landscape) {
+            body { padding: 4px 8px; }
+            header { padding: 4px 0; margin-bottom: 6px; }
+            .title-group p, .theory-section { display: none; }
+            .mode-tabs { margin-bottom: 6px; }
+            .interactive-box { padding: 8px 12px; margin-bottom: 8px; }
+            .target-note-main { font-size: 2.2rem; }
+            .fretboard { height: 170px; }
+            .string-row { height: 32px; }
+            .fret-note-target { width: 28px; height: 28px; font-size: 0.75rem; }
+        }
+
+        footer {
+            margin-top: 20px;
+            padding: 12px 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-align: center;
+            border-top: 1px solid var(--card-border);
+            width: 100%;
+            max-width: 1280px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="title-group">
+            <h1>🎸 Bajo Trainer • Modo Ensayo & PWA</h1>
+            <p>4 Cuerdas (E-A-D-G) • Herramienta de Diapasón y Reacción en Vivo</p>
+        </div>
+
+        <div class="quick-actions">
+            <!-- Botón PWA de instalación -->
+            <button class="btn accent-btn" id="btn-install-pwa" style="display: none;" onclick="installPWA()">
+                📲 Instalar App en Celular
+            </button>
+            <!-- Pantalla Siempre Activa (Wake Lock) -->
+            <button class="btn" id="btn-wakelock" onclick="toggleWakeLock()">
+                📱 Mantener Pantalla Activa
+            </button>
+            <!-- Pantalla Completa -->
+            <button class="btn" id="btn-fullscreen" onclick="toggleFullScreen()">
+                ⛶ Pantalla Completa
+            </button>
+            <!-- Modo Escenario -->
+            <button class="btn" id="btn-stagemode" onclick="toggleStageMode()">
+                🌙 Modo Escenario
+            </button>
+        </div>
+
+        <div class="header-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-score">0</div>
+                <div class="stat-label">Aciertos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-streak">0</div>
+                <div class="stat-label">Racha 🔥</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-accuracy">100%</div>
+                <div class="stat-label">Precisión</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Barra de Modos de Práctica y Ensayo -->
+    <nav class="mode-tabs">
+        <button class="mode-tab-btn active" id="tab-rehearsal" onclick="switchMode('rehearsal')">
+            ⚡ Modo Ensayo Rápido
+        </button>
+        <button class="mode-tab-btn" id="tab-string-target" onclick="switchMode('string-target')">
+            🎯 Cuerda Específica
+        </button>
+        <button class="mode-tab-btn" id="tab-speed" onclick="switchMode('speed')">
+            ⏱️ Reacción Flash / Speed
+        </button>
+        <button class="mode-tab-btn" id="tab-identify" onclick="switchMode('identify')">
+            ❓ Identificar Traste
+        </button>
+        <button class="mode-tab-btn" id="tab-free" onclick="switchMode('free')">
+            🖐️ Exploración Libre
+        </button>
+    </nav>
+
+    <!-- Barra de Sub-controles / Ajustes -->
+    <section class="subcontrols-bar">
+        <div class="btn-group">
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">Trastes:</span>
+            <button class="btn active" id="fret-0-12" onclick="setFretRange(12)">0 - 12 (1 Octava)</button>
+            <button class="btn" id="fret-0-5" onclick="setFretRange(5)">0 - 5 (Básicos)</button>
+            <button class="btn" id="fret-0-21" onclick="setFretRange(21)">0 - 21 (Mástil Completo)</button>
+        </div>
+
+        <div class="btn-group">
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">Notas:</span>
+            <button class="btn active" id="acc-all" onclick="setAccidentals('all')">Todas (# / ♭)</button>
+            <button class="btn" id="acc-naturals" onclick="setAccidentals('naturals')">Solo Naturales</button>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" id="btn-toggle-labels" onclick="toggleAllLabels()">👁️ Nombres en Mástil</button>
+            <button class="btn" id="btn-sound" onclick="toggleSound()">🔊 Sonido: ON</button>
+            <button class="btn" id="btn-notation" onclick="toggleNotation()">🔤 Cifrado: Ambos</button>
+        </div>
+    </section>
+
+    <!-- Zona Interactiva Principal (Cambia según el modo activo) -->
+    <section class="interactive-box" id="interactive-box">
+        
+        <!-- 1. PANEL MODO ENSAYO RÁPIDO (Localizador de Notas en Vivo) -->
+        <div id="view-rehearsal">
+            <div class="challenge-header">
+                <strong>¿Qué nota te pide la banda?</strong> Toca una nota para iluminar la Tónica Grave, Octavas y 5tas en el mástil:
+            </div>
+            
+            <div class="rehearsal-notes-grid" id="rehearsal-notes-grid">
+                <!-- Generado por JS -->
+            </div>
+
+            <div class="legend-bar">
+                <div class="legend-item"><span class="legend-dot dot-root"></span> <strong>Tónica Principal (Grave)</strong></div>
+                <div class="legend-item"><span class="legend-dot dot-octave"></span> <strong>Octavas</strong></div>
+                <div class="legend-item"><span class="legend-dot dot-fifth"></span> <strong>Quinta Justa (Power Chord)</strong></div>
+            </div>
+        </div>
+
+        <!-- 2. PANEL MODO CUERDA ESPECÍFICA / DESAFÍO -->
+        <div id="view-challenge" style="display: none;">
+            <div class="challenge-header" id="challenge-prompt">Encuentra la nota requerida:</div>
+            
+            <div class="target-note-display">
+                <div class="target-note-main" id="target-note-main">D</div>
+                <div class="target-note-solfege" id="target-note-solfege">(Re)</div>
+            </div>
+
+            <div class="target-string-badge" id="target-string-badge">
+                En la 2da Cuerda • Cuerda A (La)
+            </div>
+
+            <!-- Barra temporizador para modo Speed -->
+            <div class="speed-timer-container" id="speed-timer-container">
+                <div class="speed-timer-bar" id="speed-timer-bar"></div>
+            </div>
+
+            <div class="feedback-message" id="feedback-message">
+                Toca el traste exacto en la cuerda indicada 👇
+            </div>
+
+            <!-- Botones de respuesta para Quiz Inverso -->
+            <div class="reverse-quiz-grid" id="reverse-quiz-grid" style="display: none;">
+                <!-- Generado por JS -->
+            </div>
+        </div>
+
+    </section>
+
+    <!-- CONTENEDOR DEL DIAPASÓN HORIZONTAL -->
+    <section class="fretboard-wrapper" id="fretboard-wrapper">
+        <div style="position: relative; margin-left: 54px;">
+            <!-- Indicadores fijos de cuerdas (G, D, A, E) -->
+            <div class="string-labels-col">
+                <div class="string-indicator">1ª G</div>
+                <div class="string-indicator">2ª D</div>
+                <div class="string-indicator">3ª A</div>
+                <div class="string-indicator">4ª E</div>
+            </div>
+
+            <!-- Fretboard Dinámico -->
+            <div class="fretboard" id="fretboard-container">
+                <!-- Generado dinámicamente con JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Tips de Nivel Intermedio para Bajistas en Ensayo -->
+    <section class="theory-section">
+        <div class="theory-card">
+            <h4>🎸 Regla de Oro para el Bajista en la Banda</h4>
+            <p>Cuando el guitarrista o tecladista grita una nota (ej: <em>"¡Vamos a Fa# / F#!"</em>):</p>
+            <ul>
+                <li><strong>1. Tónica Grave primero:</strong> Ubica el <span class="badge-pill">F# en Cuerda E (Traste 2)</span> para dar los cimientos de la banda.</li>
+                <li><strong>2. Patrón de 5ta (Do# / C#):</strong> Cuerda A (Traste 4) para meter movimiento rítmico.</li>
+                <li><strong>3. Patrón de 8va:</strong> Cuerda D (Traste 4) para cortes y adornos agudos.</li>
+            </ul>
+        </div>
+
+        <div class="theory-card">
+            <h4>💡 Trucos de Geometría Inmediata</h4>
+            <ul>
+                <li><strong>Mismo Traste, Cuerda de Abajo:</strong> Es la 4ta justa (a 5 semitonos).</li>
+                <li><strong>2 Cuerdas Abajo + 2 Trastes a la Derecha:</strong> Octava perfecta.</li>
+                <li><strong>1 Cuerda Abajo + 2 Trastes a la Derecha:</strong> Quinta justa perfecta.</li>
+                <li><strong>Traste 12:</strong> Es exactamente el espejo de las cuerdas al aire (0) una octava arriba.</li>
+            </ul>
+        </div>
+    </section>
+
+    <footer>
+        Bajo Trainer PWA • Instalable y 100% Offline para Salas de Ensayo • Bajo Eléctrico 4 Cuerdas
+    </footer>
+
+    <script>
+        // TEORÍA MUSICAL Y CONFIGURACIÓN DEL BAJO
+        const NOTE_NAMES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const SOLFEGE_MAP = {
+            'C': 'Do', 'C#': 'Do#', 'Db': 'Re♭',
+            'D': 'Re', 'D#': 'Re#', 'Eb': 'Mi♭',
+            'E': 'Mi',
+            'F': 'Fa', 'F#': 'Fa#', 'Gb': 'Sol♭',
+            'G': 'Sol', 'G#': 'Sol#', 'Ab': 'La♭',
+            'A': 'La', 'A#': 'La#', 'Bb': 'Si♭',
+            'B': 'Si'
+        };
+
+        // Afinación Estándar 4 Cuerdas (De más aguda [0: G] a más grave [3: E])
+        const STRING_CONFIG = [
+            { name: 'G', number: 1, solfege: 'Sol', midi: 43, label: '1ª Cuerda G (Sol)' },
+            { name: 'D', number: 2, solfege: 'Re',  midi: 38, label: '2ª Cuerda D (Re)' },
+            { name: 'A', number: 3, solfege: 'La',  midi: 33, label: '3ª Cuerda A (La)' },
+            { name: 'E', number: 4, solfege: 'Mi',  midi: 28, label: '4ª Cuerda E (Mi - Grave)' }
+        ];
+
+        // Estado Global
+        let state = {
+            mode: 'rehearsal',     // 'rehearsal', 'string-target', 'speed', 'identify', 'free'
+            maxFrets: 12,          // 5, 12, 21
+            accidentals: 'all',    // 'all', 'naturals'
+            showAllLabels: false,
+            soundEnabled: true,
+            notationMode: 'both',  // 'both', 'eng', 'solfege'
+            stageMode: false,
+            wakeLock: null,
+            
+            // Estado de Modos Específicos
+            rehearsalSelectedNote: 'C',
+            currentTarget: null,   // { noteName, solfege, stringIdx, fret, ... }
+            
+            // Speed Trainer
+            speedInterval: null,
+            speedTimeLeft: 100,
+            speedDurationMs: 3500, // 3.5 segundos por nota
+            
+            // Estadísticas
+            stats: {
+                correct: 0,
+                wrong: 0,
+                streak: 0,
+                bestStreak: 0
+            }
+        };
+
+        // WEB AUDIO API - Sintetizador de Bajo Realista
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playBassNote(midiNote) {
+            if (!state.soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
+
+                const masterGain = ctx.createGain();
+                masterGain.gain.setValueAtTime(0.35, now);
+                masterGain.connect(ctx.destination);
+
+                // Fundamental (Triangle)
+                const oscTriangle = ctx.createOscillator();
+                oscTriangle.type = 'triangle';
+                oscTriangle.frequency.setValueAtTime(freq, now);
+
+                // Armónicos (Sawtooth filtrada)
+                const oscSaw = ctx.createOscillator();
+                oscSaw.type = 'sawtooth';
+                oscSaw.frequency.setValueAtTime(freq, now);
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(freq * 5.5, now);
+                filter.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.35);
+
+                const sawGain = ctx.createGain();
+                sawGain.gain.setValueAtTime(0.2, now);
+                sawGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+                oscSaw.connect(sawGain);
+                sawGain.connect(filter);
+
+                const envGain = ctx.createGain();
+                envGain.gain.setValueAtTime(0.001, now);
+                envGain.gain.linearRampToValueAtTime(0.95, now + 0.02);
+                envGain.gain.exponentialRampToValueAtTime(0.45, now + 0.3);
+                envGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+
+                oscTriangle.connect(envGain);
+                filter.connect(envGain);
+                envGain.connect(masterGain);
+
+                oscTriangle.start(now);
+                oscSaw.start(now);
+                oscTriangle.stop(now + 1.7);
+                oscSaw.stop(now + 1.7);
+            } catch (e) {
+                console.error("Audio error:", e);
+            }
+        }
+
+        // CÁLCULOS DE POSICIÓN Y NOTAS
+        function getNoteAt(stringIdx, fret) {
+            const base = STRING_CONFIG[stringIdx];
+            const midi = base.midi + fret;
+            const noteIndex = midi % 12;
+            const sharpName = NOTE_NAMES_SHARP[noteIndex];
+            const isNatural = !sharpName.includes('#');
+            const solfege = SOLFEGE_MAP[sharpName];
+
+            return {
+                stringIdx: stringIdx,
+                stringNumber: base.number,
+                stringName: base.name,
+                stringSolfege: base.solfege,
+                fret: fret,
+                midi: midi,
+                noteName: sharpName,
+                solfege: solfege,
+                isNatural: isNatural
+            };
+        }
+
+        // RENDERIZADO DEL DIAPASÓN
+        function renderFretboard() {
+            const container = document.getElementById('fretboard-container');
+            container.innerHTML = '';
+
+            const singleDotFrets = [3, 5, 7, 9, 15, 17, 19, 21];
+            const doubleDotFrets = [12, 24];
+
+            for (let f = 0; f <= state.maxFrets; f++) {
+                const fretCol = document.createElement('div');
+                fretCol.className = `fret-column fret-${f}`;
+
+                // Marcador número de traste
+                const fretNum = document.createElement('div');
+                fretNum.className = 'fret-number';
+                fretNum.innerText = f === 0 ? '0 (Aire)' : f;
+                fretCol.appendChild(fretNum);
+
+                // Incrustaciones / Dots
+                if (singleDotFrets.includes(f)) {
+                    const dot = document.createElement('div');
+                    dot.className = 'fret-marker-dot';
+                    fretCol.appendChild(dot);
+                } else if (doubleDotFrets.includes(f)) {
+                    const dot1 = document.createElement('div');
+                    dot1.className = 'fret-marker-dot fret-marker-double-1';
+                    const dot2 = document.createElement('div');
+                    dot2.className = 'fret-marker-dot fret-marker-double-2';
+                    fretCol.appendChild(dot1);
+                    fretCol.appendChild(dot2);
+                }
+
+                // Generar cuerdas (0: G, 1: D, 2: A, 3: E)
+                for (let s = 0; s < 4; s++) {
+                    const stringRow = document.createElement('div');
+                    stringRow.className = 'string-row';
+
+                    const stringLine = document.createElement('div');
+                    stringLine.className = `string-line string-${s}`;
+                    stringRow.appendChild(stringLine);
+
+                    const noteInfo = getNoteAt(s, f);
+
+                    const noteBadge = document.createElement('div');
+                    noteBadge.className = `fret-note-target ${noteInfo.isNatural ? 'natural-note' : 'accidental-note'}`;
+                    noteBadge.id = `fret-badge-${s}-${f}`;
+                    noteBadge.dataset.string = s;
+                    noteBadge.dataset.fret = f;
+                    noteBadge.dataset.note = noteInfo.noteName;
+
+                    if (state.showAllLabels) {
+                        noteBadge.innerText = formatNoteLabel(noteInfo.noteName);
+                        noteBadge.classList.add('show-all-labels');
+                    }
+
+                    // Click en traste
+                    noteBadge.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleFretClick(s, f);
+                    });
+
+                    stringRow.addEventListener('click', () => {
+                        handleFretClick(s, f);
+                    });
+
+                    stringRow.appendChild(noteBadge);
+                    fretCol.appendChild(stringRow);
+                }
+
+                container.appendChild(fretCol);
+            }
+        }
+
+        function formatNoteLabel(noteName) {
+            const solfege = SOLFEGE_MAP[noteName];
+            if (state.notationMode === 'eng') return noteName;
+            if (state.notationMode === 'solfege') return solfege;
+            return noteName;
+        }
+
+        // GENERAR BOTONES DEL MODO ENSAYO RÁPIDO
+        function renderRehearsalButtons() {
+            const grid = document.getElementById('rehearsal-notes-grid');
+            grid.innerHTML = '';
+
+            NOTE_NAMES_SHARP.forEach(note => {
+                const btn = document.createElement('button');
+                btn.className = `rehearsal-note-btn ${state.rehearsalSelectedNote === note ? 'active' : ''}`;
+                btn.id = `rehearsal-btn-${note.replace('#', 's')}`;
+                
+                const solfege = SOLFEGE_MAP[note];
+                btn.innerHTML = `
+                    <span class="note-main">${note}</span>
+                    <span class="note-sub">${solfege}</span>
+                `;
+
+                btn.onclick = () => selectRehearsalNote(note);
+                grid.appendChild(btn);
+            });
+        }
+
+        // ACCIÓN: SELECCIONAR NOTA EN MODO ENSAYO
+        function selectRehearsalNote(noteName) {
+            state.rehearsalSelectedNote = noteName;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.rehearsal-note-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`rehearsal-btn-${noteName.replace('#', 's')}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Limpiar resaltados previos en el mástil
+            clearFretboardHighlights();
+
+            // Calcular Quinta Justa (7 semitonos arriba)
+            const noteIdx = NOTE_NAMES_SHARP.indexOf(noteName);
+            const fifthName = NOTE_NAMES_SHARP[(noteIdx + 7) % 12];
+
+            // Encontrar todas las posiciones en el mástil
+            let rootPositions = [];
+            let fifthPositions = [];
+
+            for (let s = 0; s < 4; s++) {
+                for (let f = 0; f <= state.maxFrets; f++) {
+                    const info = getNoteAt(s, f);
+                    if (info.noteName === noteName) {
+                        rootPositions.push(info);
+                    } else if (info.noteName === fifthName) {
+                        fifthPositions.push(info);
+                    }
+                }
+            }
+
+            // Ordenar por MIDI (de más grave a más aguda)
+            rootPositions.sort((a, b) => a.midi - b.midi);
+
+            // Resaltar la Tónica Principal Grave (la más grave disponible)
+            if (rootPositions.length > 0) {
+                const primaryRoot = rootPositions[0];
+                const primaryBadge = document.getElementById(`fret-badge-${primaryRoot.stringIdx}-${primaryRoot.fret}`);
+                if (primaryBadge) {
+                    primaryBadge.classList.add('rehearsal-root-primary');
+                    primaryBadge.innerText = `${primaryRoot.noteName}`;
+                }
+                // Reproducir el sonido grave de la tónica
+                playBassNote(primaryRoot.midi);
+
+                // Las demás son octavas
+                for (let i = 1; i < rootPositions.length; i++) {
+                    const oct = rootPositions[i];
+                    const octBadge = document.getElementById(`fret-badge-${oct.stringIdx}-${oct.fret}`);
+                    if (octBadge) {
+                        octBadge.classList.add('rehearsal-root-octave');
+                        octBadge.innerText = `${oct.noteName}`;
+                    }
+                }
+            }
+
+            // Resaltar las Quintas Justas
+            fifthPositions.forEach(fifth => {
+                const fifthBadge = document.getElementById(`fret-badge-${fifth.stringIdx}-${fifth.fret}`);
+                if (fifthBadge) {
+                    fifthBadge.classList.add('rehearsal-fifth');
+                    fifthBadge.innerText = `5ª ${fifth.noteName}`;
+                }
+            });
+        }
+
+        function clearFretboardHighlights() {
+            document.querySelectorAll('.fret-note-target').forEach(el => {
+                el.classList.remove(
+                    'rehearsal-root-primary', 'rehearsal-root-octave', 'rehearsal-fifth',
+                    'highlight-target', 'correct-hit', 'wrong-hit'
+                );
+                if (!state.showAllLabels) {
+                    el.innerText = '';
+                } else {
+                    el.innerText = formatNoteLabel(el.dataset.note);
+                }
+            });
+        }
+
+        // GENERAR DESAFÍOS (Cuerda Específica, Speed, Quiz Inverso)
+        function generateChallenge() {
+            clearFretboardHighlights();
+
+            // Filtrar notas según rango de trastes y alteraciones
+            let candidateNotes = [];
+            for (let s = 0; s < 4; s++) {
+                for (let f = 0; f <= state.maxFrets; f++) {
+                    const info = getNoteAt(s, f);
+                    if (state.accidentals === 'naturals' && !info.isNatural) continue;
+                    candidateNotes.push(info);
+                }
+            }
+
+            const chosen = candidateNotes[Math.floor(Math.random() * candidateNotes.length)];
+            state.currentTarget = chosen;
+
+            const promptEl = document.getElementById('challenge-prompt');
+            const mainNoteEl = document.getElementById('target-note-main');
+            const solfegeEl = document.getElementById('target-note-solfege');
+            const badgeEl = document.getElementById('target-string-badge');
+            const feedbackEl = document.getElementById('feedback-message');
+            const speedBarContainer = document.getElementById('speed-timer-container');
+            const reverseGrid = document.getElementById('reverse-quiz-grid');
+
+            feedbackEl.className = 'feedback-message';
+
+            if (state.mode === 'string-target') {
+                speedBarContainer.style.display = 'none';
+                reverseGrid.style.display = 'none';
+
+                promptEl.innerText = '🎯 Encuentra la nota en la cuerda exacta:';
+                mainNoteEl.innerText = chosen.noteName;
+                solfegeEl.innerText = `(${chosen.solfege})`;
+
+                // Mensaje claro con número de cuerda y afinación
+                badgeEl.innerText = `En la ${chosen.stringNumber}ª Cuerda • Cuerda ${chosen.stringName} (${chosen.stringSolfege})`;
+                feedbackEl.innerText = 'Toca el traste correcto en esa cuerda 👇';
+            } 
+            else if (state.mode === 'speed') {
+                reverseGrid.style.display = 'none';
+                speedBarContainer.style.display = 'block';
+
+                promptEl.innerText = '⏱️ ¡REACCIÓN RÁPIDA! Ubica la nota antes de que se acabe el tiempo:';
+                mainNoteEl.innerText = chosen.noteName;
+                solfegeEl.innerText = `(${chosen.solfege})`;
+
+                badgeEl.innerText = `En la ${chosen.stringNumber}ª Cuerda (${chosen.stringName})`;
+                feedbackEl.innerText = '¡Rápido!';
+
+                startSpeedTimer();
+            } 
+            else if (state.mode === 'identify') {
+                speedBarContainer.style.display = 'none';
+                reverseGrid.style.display = 'flex';
+
+                promptEl.innerText = '❓ ¿Qué nota está marcada en el mástil?';
+                mainNoteEl.innerText = '❓';
+                solfegeEl.innerText = '';
+
+                badgeEl.innerText = `${chosen.stringNumber}ª Cuerda (${chosen.stringName}) • Traste ${chosen.fret === 0 ? '0 (Al aire)' : chosen.fret}`;
+                feedbackEl.innerText = 'Elige el nombre de la nota en los botones 👇';
+
+                const targetBadge = document.getElementById(`fret-badge-${chosen.stringIdx}-${chosen.fret}`);
+                if (targetBadge) {
+                    targetBadge.classList.add('highlight-target');
+                    targetBadge.innerText = '?';
+                }
+
+                renderReverseButtons();
+            }
+        }
+
+        // SPEED TRAINER TIMER
+        function startSpeedTimer() {
+            if (state.speedInterval) clearInterval(state.speedInterval);
+
+            const startTime = Date.now();
+            const bar = document.getElementById('speed-timer-bar');
+            bar.style.width = '100%';
+
+            state.speedInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 1 - (elapsed / state.speedDurationMs));
+                bar.style.width = `${remaining * 100}%`;
+
+                if (remaining <= 0) {
+                    clearInterval(state.speedInterval);
+                    handleSpeedTimeout();
+                }
+            }, 40);
+        }
+
+        function handleSpeedTimeout() {
+            registerHit(false);
+            const feedbackEl = document.getElementById('feedback-message');
+            feedbackEl.className = 'feedback-message feedback-error';
+            feedbackEl.innerHTML = `⏰ ¡Tiempo agotado! La nota era <strong>${state.currentTarget.noteName}</strong> en el Traste ${state.currentTarget.fret}`;
+
+            const badge = document.getElementById(`fret-badge-${state.currentTarget.stringIdx}-${state.currentTarget.fret}`);
+            if (badge) {
+                badge.classList.add('wrong-hit');
+                badge.innerText = state.currentTarget.noteName;
+            }
+
+            setTimeout(() => {
+                if (state.mode === 'speed') generateChallenge();
+            }, 1200);
+        }
+
+        // GENERAR BOTONES PARA QUIZ INVERSO
+        function renderReverseButtons() {
+            const grid = document.getElementById('reverse-quiz-grid');
+            grid.innerHTML = '';
+
+            const list = state.accidentals === 'naturals' ? ['C', 'D', 'E', 'F', 'G', 'A', 'B'] : NOTE_NAMES_SHARP;
+
+            list.forEach(note => {
+                const btn = document.createElement('button');
+                btn.className = 'reverse-btn';
+                btn.innerHTML = `${note} <span class="sub">${SOLFEGE_MAP[note] || ''}</span>`;
+                btn.onclick = () => handleReverseGuess(note);
+                grid.appendChild(btn);
+            });
+        }
+
+        function handleReverseGuess(selectedNote) {
+            if (state.mode !== 'identify' || !state.currentTarget) return;
+
+            const feedbackEl = document.getElementById('feedback-message');
+            const targetBadge = document.getElementById(`fret-badge-${state.currentTarget.stringIdx}-${state.currentTarget.fret}`);
+
+            if (selectedNote === state.currentTarget.noteName) {
+                registerHit(true);
+                feedbackEl.className = 'feedback-message feedback-success';
+                feedbackEl.innerHTML = `🎉 ¡Correcto! Era <strong>${state.currentTarget.noteName} (${state.currentTarget.solfege})</strong>`;
+
+                if (targetBadge) {
+                    targetBadge.classList.remove('highlight-target');
+                    targetBadge.classList.add('correct-hit');
+                    targetBadge.innerText = state.currentTarget.noteName;
+                }
+
+                setTimeout(() => {
+                    if (state.mode === 'identify') generateChallenge();
+                }, 900);
+            } else {
+                registerHit(false);
+                feedbackEl.className = 'feedback-message feedback-error';
+                feedbackEl.innerHTML = `❌ Elegiste ${selectedNote}, pero era <strong>${state.currentTarget.noteName} (${state.currentTarget.solfege})</strong>`;
+
+                if (targetBadge) {
+                    targetBadge.classList.add('wrong-hit');
+                    setTimeout(() => targetBadge.classList.remove('wrong-hit'), 500);
+                }
+            }
+        }
+
+        // CLIC EN EL DIAPASÓN
+        function handleFretClick(stringIdx, fret) {
+            const note = getNoteAt(stringIdx, fret);
+            playBassNote(note.midi);
+
+            const clickedBadge = document.getElementById(`fret-badge-${stringIdx}-${fret}`);
+
+            if (state.mode === 'rehearsal') {
+                // En modo ensayo, hacer click en cualquier traste selecciona esa nota para iluminarla
+                selectRehearsalNote(note.noteName);
+                return;
+            }
+
+            if (state.mode === 'free') {
+                const feedbackEl = document.getElementById('feedback-message');
+                feedbackEl.innerHTML = `🎵 Tocaste: <strong>${note.noteName} (${note.solfege})</strong> en ${note.stringNumber}ª Cuerda (Traste ${fret}) • MIDI: ${note.midi}`;
+                
+                if (clickedBadge) {
+                    clickedBadge.classList.add('correct-hit');
+                    clickedBadge.innerText = note.noteName;
+                    setTimeout(() => {
+                        clickedBadge.classList.remove('correct-hit');
+                        if (!state.showAllLabels) clickedBadge.innerText = '';
+                    }, 800);
+                }
+                return;
+            }
+
+            if (state.mode === 'string-target' || state.mode === 'speed') {
+                if (!state.currentTarget) return;
+
+                if (state.mode === 'speed' && state.speedInterval) {
+                    clearInterval(state.speedInterval);
+                }
+
+                const isExactString = stringIdx === state.currentTarget.stringIdx;
+                const isExactFret = fret === state.currentTarget.fret;
+                const feedbackEl = document.getElementById('feedback-message');
+
+                if (isExactString && isExactFret) {
+                    registerHit(true);
+                    feedbackEl.className = 'feedback-message feedback-success';
+                    feedbackEl.innerHTML = `🎉 ¡Perfecto! Acertaste <strong>${note.noteName} (${note.solfege})</strong> en la ${note.stringNumber}ª cuerda`;
+
+                    if (clickedBadge) {
+                        clickedBadge.classList.add('correct-hit');
+                        clickedBadge.innerText = note.noteName;
+                    }
+
+                    setTimeout(() => {
+                        generateChallenge();
+                    }, 850);
+                } else {
+                    registerHit(false);
+                    feedbackEl.className = 'feedback-message feedback-error';
+                    feedbackEl.innerHTML = `❌ Tocaste ${note.noteName} (${note.stringNumber}ª Cuerda, Traste ${fret}). ¡Buscamos ${state.currentTarget.noteName} en la ${state.currentTarget.stringNumber}ª Cuerda!`;
+
+                    if (clickedBadge) {
+                        clickedBadge.classList.add('wrong-hit');
+                        clickedBadge.innerText = note.noteName;
+                        setTimeout(() => {
+                            clickedBadge.classList.remove('wrong-hit');
+                            if (!state.showAllLabels) clickedBadge.innerText = '';
+                        }, 700);
+                    }
+                }
+            }
+        }
+
+        // ESTADÍSTICAS
+        function registerHit(isSuccess) {
+            if (isSuccess) {
+                state.stats.correct++;
+                state.stats.streak++;
+                if (state.stats.streak > state.stats.bestStreak) {
+                    state.stats.bestStreak = state.stats.streak;
+                }
+            } else {
+                state.stats.wrong++;
+                state.stats.streak = 0;
+            }
+
+            const total = state.stats.correct + state.stats.wrong;
+            const accuracy = total > 0 ? Math.round((state.stats.correct / total) * 100) : 100;
+
+            document.getElementById('stat-score').innerText = state.stats.correct;
+            document.getElementById('stat-streak').innerText = state.stats.streak;
+            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+        }
+
+        // CAMBIO DE MODO
+        function switchMode(newMode) {
+            state.mode = newMode;
+            if (state.speedInterval) clearInterval(state.speedInterval);
+
+            // Actualizar pestañas
+            document.querySelectorAll('.mode-tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeTab = document.getElementById(`tab-${newMode}`);
+            if (activeTab) activeTab.classList.add('active');
+
+            const viewRehearsal = document.getElementById('view-rehearsal');
+            const viewChallenge = document.getElementById('view-challenge');
+
+            if (newMode === 'rehearsal') {
+                viewRehearsal.style.display = 'block';
+                viewChallenge.style.display = 'none';
+                renderRehearsalButtons();
+                selectRehearsalNote(state.rehearsalSelectedNote);
+            } else {
+                viewRehearsal.style.display = 'none';
+                viewChallenge.style.display = 'block';
+                generateChallenge();
+            }
+        }
+
+        // AJUSTES
+        function setFretRange(maxFret) {
+            state.maxFrets = maxFret;
+            [5, 12, 21].forEach(r => {
+                const btn = document.getElementById(`fret-0-${r}`);
+                if (btn) btn.classList.toggle('active', r === maxFret);
+            });
+            renderFretboard();
+            if (state.mode === 'rehearsal') {
+                selectRehearsalNote(state.rehearsalSelectedNote);
+            } else {
+                generateChallenge();
+            }
+        }
+
+        function setAccidentals(type) {
+            state.accidentals = type;
+            document.getElementById('acc-all').classList.toggle('active', type === 'all');
+            document.getElementById('acc-naturals').classList.toggle('active', type === 'naturals');
+            if (state.mode !== 'rehearsal') generateChallenge();
+        }
+
+        function toggleAllLabels() {
+            state.showAllLabels = !state.showAllLabels;
+            const btn = document.getElementById('btn-toggle-labels');
+            btn.classList.toggle('active', state.showAllLabels);
+            btn.innerText = state.showAllLabels ? '🙈 Ocultar Nombres' : '👁️ Nombres en Mástil';
+            renderFretboard();
+            if (state.mode === 'rehearsal') selectRehearsalNote(state.rehearsalSelectedNote);
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            const btn = document.getElementById('btn-sound');
+            btn.innerText = state.soundEnabled ? '🔊 Sonido: ON' : '🔇 Sonido: OFF';
+            btn.classList.toggle('active', state.soundEnabled);
+            if (state.soundEnabled) getAudioContext();
+        }
+
+        function toggleNotation() {
+            if (state.notationMode === 'both') {
+                state.notationMode = 'eng';
+                document.getElementById('btn-notation').innerText = '🔤 Cifrado: Americano';
+            } else if (state.notationMode === 'eng') {
+                state.notationMode = 'solfege';
+                document.getElementById('btn-notation').innerText = '🔤 Cifrado: Solfeo';
+            } else {
+                state.notationMode = 'both';
+                document.getElementById('btn-notation').innerText = '🔤 Cifrado: Ambos';
+            }
+            if (state.showAllLabels) renderFretboard();
+            if (state.mode === 'rehearsal') selectRehearsalNote(state.rehearsalSelectedNote);
+        }
+
+        // HERRAMIENTAS PARA SALA DE ENSAYO / ESCENARIO
+        async function toggleWakeLock() {
+            const btn = document.getElementById('btn-wakelock');
+            if (!('wakeLock' in navigator)) {
+                alert('Tu navegador no soporta mantener la pantalla siempre encendida.');
+                return;
+            }
+            try {
+                if (state.wakeLock !== null) {
+                    await state.wakeLock.release();
+                    state.wakeLock = null;
+                    btn.classList.remove('active');
+                    btn.innerText = '📱 Mantener Pantalla Activa';
+                } else {
+                    state.wakeLock = await navigator.wakeLock.request('screen');
+                    btn.classList.add('active');
+                    btn.innerText = '🔆 Pantalla Siempre Activa: ON';
+                    state.wakeLock.addEventListener('release', () => {
+                        state.wakeLock = null;
+                        btn.classList.remove('active');
+                        btn.innerText = '📱 Mantener Pantalla Activa';
+                    });
+                }
+            } catch (err) {
+                console.error("WakeLock error:", err);
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function toggleStageMode() {
+            state.stageMode = !state.stageMode;
+            document.body.classList.toggle('stage-mode', state.stageMode);
+            const btn = document.getElementById('btn-stagemode');
+            btn.classList.toggle('active', state.stageMode);
+            btn.innerText = state.stageMode ? '☀️ Modo Normal' : '🌙 Modo Escenario';
+        }
+
+        // PWA SERVICE WORKER & INSTALACIÓN
+        let deferredPrompt = null;
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado:', reg.scope))
+                    .catch(err => console.log('Error registro SW:', err));
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('btn-install-pwa');
+            if (installBtn) installBtn.style.display = 'inline-flex';
+        });
+
+        function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('Usuario instaló la app');
+                }
+                deferredPrompt = null;
+                const installBtn = document.getElementById('btn-install-pwa');
+                if (installBtn) installBtn.style.display = 'none';
+            });
+        }
+
+        // INICIALIZACIÓN
+        window.addEventListener('DOMContentLoaded', () => {
+            renderFretboard();
+            renderRehearsalButtons();
+            selectRehearsalNote('C');
+
+            document.body.addEventListener('click', () => {
+                if (state.soundEnabled) getAudioContext();
+            }, { once: true });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "Entrenador de Bajo Eléctrico",
+  "short_name": "BajoTrainer",
+  "description": "Entrenador de notas y diapasón para bajo de 4 cuerdas y modo ensayo para bandas",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#12141a",
+  "theme_color": "#1a1e27",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
